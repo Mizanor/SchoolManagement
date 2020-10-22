@@ -1,0 +1,236 @@
+@extends('backend.layouts.master')
+@section('content')
+<!-- Content Wrapper. Contains page content -->
+  <div class="content-wrapper">
+    <!-- Content Header (Page header) -->
+    <div class="content-header">
+      <div class="container-fluid">
+        <div class="row mb-2">
+          <div class="col-sm-6">
+            <h1 class="m-0 text-dark">Manage Roll Generate</h1>
+          </div><!-- /.col -->
+          <div class="col-sm-6">
+            <ol class="breadcrumb float-sm-right">
+              <li class="breadcrumb-item"><a href="">Home</a></li>
+              <li class="breadcrumb-item active">Roll Generate</li>
+            </ol>
+          </div><!-- /.col -->
+        </div><!-- /.row -->
+      </div><!-- /.container-fluid -->
+    </div>
+    <!-- /.content-header -->
+
+    <!-- Main content -->
+    <section class="content">
+      <div class="container-fluid">
+        <!-- Small boxes (Stat box) -->
+       
+        <!-- Main row -->
+        <div class="row">
+          <!-- Left col -->
+          <section class="col-md-12">
+            <!-- Custom tabs (Charts with tabs)-->
+            <div class="card">
+              <div class="card-header">
+               <h3>Search Criteria</h3>
+              </div><!-- /.card-header -->
+              <div class="card-body">
+                <form method="POST" action="{{route('students.roll.store')}}" id="myForm">
+                  @csrf
+                  <div class="form-row">
+                    <div class="form-group col-md-4">
+                    <label>Year <font style="color: red">*</font></label>
+                    <select name="year_id" id="year_id" class="form-control form-control-sm">
+                      <option value="">Select Year</option>
+                      @foreach($years as $year)
+                      <option value="{{$year->id}}">{{$year->name}}</option>
+                      @endforeach
+                    </select>
+                   </div>
+                   <div class="form-group col-md-4">
+                    <label>Class <font style="color: red">*</font></label>
+                    <select name="class_id" id="class_id" class="form-control form-control-sm">
+                      <option value="">Select Class</option>
+                      @foreach($classes as $cls)
+                      <option value="{{$cls->id}}">{{$cls->name}}</option>
+                      @endforeach
+                    </select>
+                   </div>
+                   <div class="form-group col-md-4">
+                    <label>Section <font style="color: green">সেক্সান না থাকলে খালি রাখুন</font></label>
+                    <select name="section_id" id="section_id" class="form-control form-control-sm">
+                      <option value="">Select Class</option>
+                      @foreach($sections as $section)
+                      <option value="{{$section->id}}">{{$section->name}}</option>
+                      @endforeach
+                    </select>
+                   </div>
+                   <div class="form-group col-md-4" style="padding-top: 32px;">
+                    <a id="search" class="btn btn-primary btn-sm" name="search">Search</a>
+                   </div>
+                  </div><br/>
+                  <div class="row d-none" id="roll-generate" >
+                    <div class="col-md-12">
+                      <table class="table table-bordered table-striped dt-responsive" style="width:100%">
+                        <thead>
+                          <tr>
+                            <th>ID No</th>
+                            <th>Student Name</th>
+                           
+                            <th>Gender</th>
+                            <th>Roll No</th>
+                            <th>Action</th>
+                          </tr>
+                        </thead>
+                        <tbody id="roll-generate-tr" >
+                        </tbody>
+                        
+                      </table>
+                      
+                    </div>
+                    <button type="submit" class="btn btn-success btn-sm">Roll Generate</button>
+                  </div>
+                  
+                </form>
+                
+              </div>
+              
+            </div>
+            <!-- /.card -->
+
+            
+
+           
+            <!-- /.card -->
+          </section>
+              </div>
+              <!-- /.card-body -->
+            </div>
+            <!-- /.card -->
+          </section>
+          <!-- right col -->
+        </div>
+   
+
+  <script type="text/javascript">
+    $(document).on('click', '#search', function(){
+      var year_id = $('#year_id').val();
+      var class_id = $('#class_id').val();
+      var section_id = $('#section_id').val();
+      $('.notifyjs-corner').html('');
+      if(year_id == ''){
+        $.notify("Year Required", {globalPosition: 'top right',className: 'error'});
+        return false;
+      }
+      if(class_id == ''){
+        $.notify("Class Required", {globalPosition: 'top right',className: 'error'});
+        return false;
+      }
+      $.ajax({
+        url: "{{route('students.roll.get-student')}}",
+        type: "GET",
+        data: {'year_id': year_id, 'class_id':class_id, 'section_id':section_id},
+        success: function(data){
+          $('#roll-generate').removeClass('d-none');
+          var html = '';
+          $.each(data, function( key, v ){
+            html +=
+            '<tr>'+
+            '<td>'+v.student.id_no+'<input type="hidden" name="student_id" value="'+v.student_id+'"></td>'+
+            '<td>'+v.student.name+'</td>'+
+            '<td>'+v.student.gender+'</td>'+
+            '<td>'+v.roll+'</td>'+
+            '<td><a class="btn btn-success btn-sm" title="Result" target="_blank" href="{{route('students.roll.payslip')}}">Result</a></td>'+
+            '</tr>';
+
+
+          });
+          html = $('#roll-generate-tr').html(html);
+        }
+      });
+    });
+  </script>
+
+
+  <script>
+  $(document).ready(function () {
+    $('#myForm').validate({
+      rules: {
+
+        "roll": {
+          required: true,
+        }
+
+      },
+      messages: {
+       },
+      errorElement: 'span',
+      errorPlacement: function (error, element) {
+        error.addClass('invalid-feedback');
+        element.closest('.form-group').append(error);
+      },
+      highlight: function (element, errorClass, validClass) {
+        $(element).addClass('is-invalid');
+      },
+      unhighlight: function (element, errorClass, validClass) {
+        $(element).removeClass('is-invalid');
+      }
+    });
+  });
+</script>
+@endsection
+
+<!-- controller -->
+<?php
+
+namespace App\Http\Controllers\Backend\Check;
+
+use App\Http\Controllers\Controller;
+use Illuminate\Http\Request;
+use App\Model\AssignStudent;
+use App\Model\DiscountStudent;
+use App\User;
+use App\Model\StudentClass;
+use App\Model\StudentGroup;
+use App\Model\StudentShift;
+use App\Model\Year;
+use DB;
+use PDF;
+
+class CheckController extends Controller
+{
+    public function view(){
+      
+      $data['years']= Year::orderBy('id','asc')->get();
+      $data['classes']= StudentClass::all();
+      $data['sections']= StudentShift::all();
+      return view('backend.account.employee.check',$data);
+    }
+    public function getStudent(Request $request){
+      $allData = AssignStudent:: with(['student'])->where('year_id',$request->year_id)->where('class_id',$request->class_id)->where('shift_id',$request->section_id)->get();
+      return response()->json($allData);
+    }
+
+    public function store(Request $request){
+        
+      $year_id = $request->year_id;
+      $class_id = $request->class_id;
+      if ($request->student_id !=null){
+        for ($i=0; $i < count($request->student_id); $i++) {
+          AssignStudent::where('year_id',$year_id)->where('class_id',$class_id)->where('student_id',$request->student_id[$i])->update(['roll' => $request->roll[$i]]);
+        }
+      }else{
+        return redirect()->back()->with('error','Sorry! There are no Student');
+      }
+      return redirect()->route('students.roll.view')->with('success', 'well done! Successfully Roll generated');
+    }
+
+        public function paySlip(Request $request){
+      $student_id = $request->student_id;
+      $class_id = $request->class_id;
+      $data['details'] = AssignStudent::with(['student'])->where('student_id',$student_id)->where('class_id',$class_id)->first();
+      $pdf = PDF::loadView('backend.account.employee.check-pdf', $data);
+      $pdf->SetProtection(['copy', 'print'],'','pass');
+      return $pdf->stream('document.pdf');
+    }
+}
